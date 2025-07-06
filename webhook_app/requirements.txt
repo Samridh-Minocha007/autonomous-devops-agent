@@ -1,0 +1,7 @@
+langchain
+langchain-google-genai
+langchainhub
+python-dotenv
+docker
+requests
+Flask

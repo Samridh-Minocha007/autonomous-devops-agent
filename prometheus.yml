@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+rule_files:
+  - "alert.rules.yml"  # <-- Add this line
+
+alerting: # Add this entire section
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'webapp'
+    static_configs:
+      - targets: ['webapp-service:8080']

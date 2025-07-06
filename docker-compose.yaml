@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  webapp:
+    build: ./app
+    container_name: webapp-service
+    ports:
+      - "8000:8000"
+    stop_grace_period: 30s
+  #nginx: # <-- Add this entire new service
+    #image: nginx:latest
+    #container_name: nginx-proxy
+    #ports:
+      #- "8000:80" # NGINX listens on port 8000 on your machine
+    #volumes:
+      #- ./nginx.conf:/etc/nginx/nginx.conf
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml  # <-- This line is likely missing or incorrect
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+
+  webhook-receiver: # Our new Flask app to receive alerts
+    build: ./webhook_app
+    container_name: webhook-receiver
+    ports:
+      - "5001:5001"
+    volumes: # <-- Add this entire 'volumes' section
+    - ./main_agent.py:/app/main_agent.py
+    - ./tools.py:/app/tools.py
+    - ./.env:/app/.env
+    - /var/run/docker.sock:/var/run/docker.sock
+    stop_grace_period: 30s 

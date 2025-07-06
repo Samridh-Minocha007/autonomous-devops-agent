@@ -1,0 +1,11 @@
+groups:
+  - name: WebAppAlerts
+    rules:
+      - alert: WebAppDown
+        expr: up{job="webapp"} == 0
+        for: 1m
+        labels:
+          severity: 'critical'
+        annotations:
+          summary: "Webapp is down"
+          description: "The webapp service at {{ $labels.instance }} is down."
