@@ -33,19 +33,24 @@ tool_list = [
         name="get_container_logs",
         func=tools.get_container_logs,
         description="Use this to get the last 20 log lines from a specific container. You must provide the container's name or ID."
+    ),
+    Tool(
+        name="list_webapp_status",
+        func=tools.list_webapp_status,
+        description="Use this tool to list the specific status (running, exited, unhealthy) of all webapp containers (e.g., devopsagent-webapp-1, devopsagent-webapp-2). Useful for identifying which instances are actually down or stuck."
     )
 ]
 
 # 3. Prompt Template (note: added {tool_names})
 prompt_template = """
 You are an autonomous DevOps SRE agent. Your job is to diagnose and fix issues.
-Your primary webapp service is named 'webapp-service'.
 
 Follow these steps:
-1. First, use 'check_webapp_health'. If it is healthy, your job is done.
-2. If the webapp is down, use 'list_running_containers' to see what is currently running.
-3. Compare the list of running containers to the expected 'webapp-service'. The container that is missing is the one you need to restart.
-4. Use the 'restart_container' tool on the 'webapp-service' container to fix the problem.
+1. First, use 'check_webapp_health' on 'webapp' (the Nginx frontend) to see if the overall service is responsive. If it is healthy, your job is done.
+2. If the webapp frontend is down, use 'list_webapp_status' to get the current state of all individual 'devopsagent-webapp-X' containers.
+3. **Analyze the 'list_webapp_status' output.** For each 'devopsagent-webapp-X' container that has a status of 'exited' or 'unhealthy' (or is not in a 'running (Health: healthy)' state), consider it down.
+4. **For each identified down or unhealthy 'devopsagent-webapp-X' container, use the 'restart_container' tool with its specific container name (e.g., 'devopsagent-webapp-1').** Restart them one by one.
+5. After attempting to restart all identified down containers, use 'check_webapp_health' again to verify if the overall webapp frontend is back online. If it's still down, you might need to investigate logs using 'get_container_logs' for the recently restarted containers to find further clues, or list all running containers again.
 
 You have access to the following tools:
 {tools}
@@ -61,8 +66,8 @@ Action: the action to take, should be one of the available tools from the list a
 Action Input: the input to the action
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: a final summary of what you did and the resolution.
+Thought: I have taken all necessary actions and verified the state.
+Final Answer: A final summary of what you did and the resolution.
 
 Begin!
 

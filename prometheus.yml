@@ -2,14 +2,17 @@ global:
   scrape_interval: 15s
 
 rule_files:
-  - "alert.rules.yml"  # <-- Add this line
+  - "alert.rules.yml"
 
-alerting: # Add this entire section
+alerting:
   alertmanagers:
     - static_configs:
         - targets: ['alertmanager:9093']
 
 scrape_configs:
   - job_name: 'webapp'
+    # The metrics_path is correct for your main.py
+    metrics_path: /metrics # Your Python app serves metrics on port 8080 at the /metrics endpoint
     static_configs:
-      - targets: ['webapp-service:8080']
+      - targets: ['webapp:8080'] # <--- CHANGE THIS LINE!
+

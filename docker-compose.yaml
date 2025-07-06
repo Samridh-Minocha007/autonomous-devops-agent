@@ -2,17 +2,27 @@ version: '3.8'
 services:
   webapp:
     build: ./app
-    container_name: webapp-service
-    ports:
-      - "8000:8000"
+    mem_limit: 500M # Explicitly set memory limit
     stop_grace_period: 30s
-  #nginx: # <-- Add this entire new service
-    #image: nginx:latest
-    #container_name: nginx-proxy
-    #ports:
-      #- "8000:80" # NGINX listens on port 8000 on your machine
-    #volumes:
-      #- ./nginx.conf:/etc/nginx/nginx.conf
+    #restart: always # Ensure it always restarts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-proxy
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      webapp:
+        condition: service_healthy 
 
   prometheus:
     image: prom/prometheus:latest

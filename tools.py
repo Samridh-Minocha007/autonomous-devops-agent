@@ -24,19 +24,27 @@ def list_running_containers(placeholder: str = "") -> str:
         return f"Error listing containers: {e}"
 
 def restart_container(container_id: str) -> str:
-    """Restarts a specific Docker container immediately."""
+    """Restarts a specific Docker container. If stopped, it attempts to start it."""
     print(f"--- TOOL: Attempting to restart container {container_id} ---")
     try:
+        # Try to get running container (restart only works for running)
         container = client.containers.get(container_id)
         container.restart()
         return f"Successfully restarted container {container_id}."
     except docker.errors.NotFound:
-        # This is key! If the container is stopped, we use 'docker start'.
-        print(f"Container {container_id} not running, attempting to start it.")
-        client.containers.client.start(container_id)
-        return f"Container {container_id} was stopped and has been started."
+        # If not found running, try to get it (even if stopped)
+        try:
+            # Use all=True to find stopped containers
+            container = client.containers.get(container_id, all=True)
+            print(f"Container {container_id} found in exited state. Attempting to start it.")
+            container.start()
+            return f"Container {container_id} was stopped and has been started."
+        except docker.errors.NotFound:
+            return f"Error: Container {container_id} not found at all (neither running nor stopped)."
+        except Exception as e:
+            return f"Error starting stopped container {container_id}: {e}"
     except Exception as e:
-        return f"Error restarting container: {e}"
+        return f"Error restarting container {container_id}: {e}"
     
 def check_webapp_health(placeholder: str = "") -> str:
     """
@@ -44,7 +52,8 @@ def check_webapp_health(placeholder: str = "") -> str:
     """
     print("--- TOOL: Checking webapp health ---")
     try:
-        response = requests.get("http://localhost:8000", timeout=5)
+        
+        response = requests.get("http://webapp:8000/", timeout=5) # <-- CHANGE THIS LINE
         if response.status_code == 200:
             return "Webapp is healthy and running."
         else:
@@ -67,9 +76,39 @@ def get_container_logs(container_id: str) -> str:
         return f"Error: Container {container_id} not found."
     except Exception as e:
         return f"Error fetching logs: {e}"
+    
+def list_webapp_status(placeholder: str = "") -> str:
+    """
+    Lists all Docker containers related to the 'webapp' service and their current status (running or exited).
+    Helps identify which specific webapp instances are currently down.
+    """
+    print("--- TOOL: Listing webapp container status ---")
+    try:
+        # List ALL containers, then filter by name prefix (e.g., 'devopsagent-webapp-')
+        # This allows us to see even exited webapp containers
+        all_containers = client.containers.list(all=True)
+        webapp_containers_info = []
+        for c in all_containers:
+            if c.name.startswith('devopsagent-webapp-'): # Or more sophisticated filtering if needed
+                status = c.status
+                # If healthcheck is defined, append health status
+                if c.attrs.get('State', {}).get('Health'):
+                    health_status = c.attrs['State']['Health']['Status']
+                    status = f"{status} (Health: {health_status})"
+                webapp_containers_info.append(f"ID: {c.short_id}, Name: {c.name}, Status: {status}")
+
+        if not webapp_containers_info:
+            return "No webapp containers found with 'devopsagent-webapp-' prefix."
+        
+        return "\n".join(webapp_containers_info)
+    except Exception as e:
+        return f"Error listing webapp status: {e}"
 
 # --- Test the Tools ---
 if __name__ == "__main__":
     print("Running tool tests...")
     print("Checking webapp health:")
     print(check_webapp_health()) # We are now testing the new function
+    print("Running tool tests...")
+    print("Listing webapp status:")
+    print(list_webapp_status())
