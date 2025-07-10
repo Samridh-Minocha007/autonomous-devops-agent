@@ -1,7 +1,7 @@
 import docker
 import requests
 
-# Initialize the Docker client
+
 try:
     client = docker.from_env()
 except docker.errors.DockerException:
@@ -18,7 +18,7 @@ def list_running_containers(placeholder: str = "") -> str:
         containers = client.containers.list()
         if not containers:
             return "No containers are currently running."
-        # Format the output nicely
+       
         return "\n".join([f"ID: {c.short_id}, Name: {c.name}" for c in containers])
     except Exception as e:
         return f"Error listing containers: {e}"
@@ -27,14 +27,14 @@ def restart_container(container_id: str) -> str:
     """Restarts a specific Docker container. If stopped, it attempts to start it."""
     print(f"--- TOOL: Attempting to restart container {container_id} ---")
     try:
-        # Try to get running container (restart only works for running)
+        
         container = client.containers.get(container_id)
         container.restart()
         return f"Successfully restarted container {container_id}."
     except docker.errors.NotFound:
-        # If not found running, try to get it (even if stopped)
+        
         try:
-            # Use all=True to find stopped containers
+           
             container = client.containers.get(container_id, all=True)
             print(f"Container {container_id} found in exited state. Attempting to start it.")
             container.start()
@@ -53,7 +53,7 @@ def check_webapp_health(placeholder: str = "") -> str:
     print("--- TOOL: Checking webapp health ---")
     try:
         
-        response = requests.get("http://webapp:8000/", timeout=5) # <-- CHANGE THIS LINE
+        response = requests.get("http://webapp:8000/", timeout=5) 
         if response.status_code == 200:
             return "Webapp is healthy and running."
         else:
@@ -63,7 +63,7 @@ def check_webapp_health(placeholder: str = "") -> str:
     except Exception as e:
         return f"An error occurred while checking webapp health: {e}"
 
-# ... (keep all your existing functions) ...
+
 
 def get_container_logs(container_id: str) -> str:
     """Fetches the last 20 lines of logs for a specific Docker container."""
@@ -84,14 +84,13 @@ def list_webapp_status(placeholder: str = "") -> str:
     """
     print("--- TOOL: Listing webapp container status ---")
     try:
-        # List ALL containers, then filter by name prefix (e.g., 'devopsagent-webapp-')
-        # This allows us to see even exited webapp containers
+        
         all_containers = client.containers.list(all=True)
         webapp_containers_info = []
         for c in all_containers:
-            if c.name.startswith('devopsagent-webapp-'): # Or more sophisticated filtering if needed
+            if c.name.startswith('devopsagent-webapp-'): 
                 status = c.status
-                # If healthcheck is defined, append health status
+                
                 if c.attrs.get('State', {}).get('Health'):
                     health_status = c.attrs['State']['Health']['Status']
                     status = f"{status} (Health: {health_status})"
@@ -104,11 +103,11 @@ def list_webapp_status(placeholder: str = "") -> str:
     except Exception as e:
         return f"Error listing webapp status: {e}"
 
-# --- Test the Tools ---
+
 if __name__ == "__main__":
     print("Running tool tests...")
     print("Checking webapp health:")
-    print(check_webapp_health()) # We are now testing the new function
+    print(check_webapp_health()) 
     print("Running tool tests...")
     print("Listing webapp status:")
     print(list_webapp_status())

@@ -2,9 +2,9 @@ version: '3.8'
 services:
   webapp:
     build: ./app
-    mem_limit: 500M # Explicitly set memory limit
+    mem_limit: 500M 
     stop_grace_period: 30s
-    #restart: always # Ensure it always restarts
+    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/"]
       interval: 5s
@@ -29,7 +29,7 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml  # <-- This line is likely missing or incorrect
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml  
     ports:
       - "9090:9090"
 
@@ -47,12 +47,12 @@ services:
     volumes:
       - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
 
-  webhook-receiver: # Our new Flask app to receive alerts
+  webhook-receiver: 
     build: ./webhook_app
     container_name: webhook-receiver
     ports:
       - "5001:5001"
-    volumes: # <-- Add this entire 'volumes' section
+    volumes: 
     - ./main_agent.py:/app/main_agent.py
     - ./tools.py:/app/tools.py
     - ./.env:/app/.env

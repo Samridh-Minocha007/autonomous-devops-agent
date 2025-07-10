@@ -9,10 +9,10 @@ import tools
 
 load_dotenv()
 
-# 1. Setup the LLM
+
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest", temperature=0)
 
-# 2. Define the Tools
+
 tool_list = [
     Tool(
         name="list_running_containers",
@@ -41,7 +41,7 @@ tool_list = [
     )
 ]
 
-# 3. Prompt Template (note: added {tool_names})
+
 prompt_template = """
 You are an autonomous DevOps SRE agent. Your job is to diagnose and fix issues.
 
@@ -75,10 +75,10 @@ Question: {input}
 Thought: {agent_scratchpad}
 """
 
-# ✅ Do NOT use .partial() — LangChain fills {tools} and {tool_names} automatically
+
 prompt = PromptTemplate.from_template(prompt_template)
 
-# 4. Create the Agent
+
 agent = create_react_agent(llm=llm, tools=tool_list, prompt=prompt)
 
 agent_executor = AgentExecutor(
@@ -89,7 +89,7 @@ agent_executor = AgentExecutor(
 )
 
 
-# 5. Run the Agent
+
 if __name__ == "__main__":
     problem = sys.argv[1] if len(sys.argv) > 1 else "The webapp is down. Please investigate and resolve."
     print(f"--- Starting DevOps Agent for problem: {problem} ---")

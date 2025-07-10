@@ -4,15 +4,15 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from prometheus_client import start_http_server, Counter
 
-# --- NEW: This list will grow with each request, simulating a leak ---
+
 MEMORY_LEAK = []
 
 REQUEST_COUNTER = Counter('http_requests_total', 'Total HTTP Requests')
 
 class SimpleServer(BaseHTTPRequestHandler):
     def do_GET(self):
-        # --- NEW: Add data to our list on each request to consume memory ---
-        MEMORY_LEAK.append("." * 1024 * 1024) # Appends ~1MB of data
+        
+        MEMORY_LEAK.append("." * 1024 * 1024) 
 
         REQUEST_COUNTER.inc()
         self.send_response(200)
@@ -22,7 +22,7 @@ class SimpleServer(BaseHTTPRequestHandler):
 
 def graceful_shutdown(signum, frame):
     print("🛑 Received SIGTERM, shutting down web server...")
-    # This needs to be global to be accessible here
+   
     global webServer
     threading.Thread(target=webServer.shutdown).start()
     sys.exit(0)

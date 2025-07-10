@@ -11,8 +11,8 @@ alerting:
 
 scrape_configs:
   - job_name: 'webapp'
-    # The metrics_path is correct for your main.py
-    metrics_path: /metrics # Your Python app serves metrics on port 8080 at the /metrics endpoint
+    
+    metrics_path: /metrics 
     static_configs:
-      - targets: ['webapp:8080'] # <--- CHANGE THIS LINE!
+      - targets: ['webapp:8080'] 
 
